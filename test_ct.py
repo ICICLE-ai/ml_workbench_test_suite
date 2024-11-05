@@ -139,3 +139,15 @@ class TestCameraTraps:
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
         power_summary_str = tapis_client.files.getContents(systemId='icicledev-test', path=jobdir+'/ct_run/power_output_dir/power_summary_report.json')
         power_summary = json.loads(power_summary_str.decode('utf-8'))
+        assert all([plugin['cpu_power_consumption']>0 for plugin in power_summary['plugin power summary report']])
+        if enable_gpu(device):
+            assert all([plugin['gpu_power_consumption']>0 for plugin in power_summary['plugin power summary report']])
+        else:
+            assert all([plugin['gpu_power_consumption']==0 for plugin in power_summary['plugin power summary report']])
+
+    def test_ckn_events(self, model, device, site, tapis_client, experiment_logs):
+        jobid = self.get_job_id(model, device, site, experiment_logs)
+        jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
+        ckn_events = tapis_client.files.getContents(systemId='icicledev-test', path=jobdir+'/ct_run/oracle_output_dir/ckn.log')
+        events = [line for line in ckn_events.decode('utf-8').split('\n') if 'New oracle event' in line]
+        assert len(events) == 12
