@@ -1,5 +1,4 @@
 import pytest
-import itertools
 import json
 from time import sleep, time
 from tapipy.tapis import Tapis

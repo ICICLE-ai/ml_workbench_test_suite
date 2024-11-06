@@ -11,7 +11,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install dependencies
-        run: pip install pytest pytest-html tapipy
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
       - name: Get credentials
         run: |
           echo "TAPIS_USERNAME=${{ secrets.TAPIS_ACCOUNT }}" >> "$GITHUB_ENV"
