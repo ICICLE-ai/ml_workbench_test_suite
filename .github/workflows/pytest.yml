@@ -16,7 +16,7 @@ jobs:
           pip install -r requirements.txt
       - name: Get credentials
         run: |
-          echo "TAPIS_USERNAME=${{ secrets.TAPIS_ACCOUNT }}" >> "$GITHUB_ENV"
+          echo "TAPIS_USER=${{ secrets.TAPIS_ACCOUNT }}" >> "$GITHUB_ENV"
           echo "TAPIS_PASSWORD=${{ secrets.TAPIS_PASSWORD }}" >> "$GITHUB_ENV"
       - name: Run tests
         run: pytest --html=results.html .
