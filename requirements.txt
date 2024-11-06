@@ -1,5 +1,3 @@
 pytest
 tapipy
 pytest-html
-json
-time
