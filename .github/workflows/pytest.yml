@@ -14,8 +14,8 @@ jobs:
         run: pip install pytest pytest-html
       - name: Get credentials
         run: |
-          echo "TAPIS_USERNAME ${{ secrets.TAPIS_ACCOUNT }}" >> "$GITHUB_ENV"
-          echo "TAPIS_PASSWORD ${{ secrets.TAPIS_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "TAPIS_USERNAME=${{ secrets.TAPIS_ACCOUNT }}" >> "$GITHUB_ENV"
+          echo "TAPIS_PASSWORD=${{ secrets.TAPIS_PASSWORD }}" >> "$GITHUB_ENV"
       - name: Run tests
         run: pytest --html=results.html .
       - name: Upload report
