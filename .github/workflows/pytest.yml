@@ -1,0 +1,25 @@
+name: PyTest
+
+on:
+  workflow_dispatch
+
+jobs:
+  testsuite:
+    runs-on: ubuntu-latest
+    environment: main
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: pip install pytest pytest-html
+      - name: Get credentials
+        run: |
+          echo "TAPIS_USERNAME ${{ secrets.TAPIS_ACCOUNT }}" >> "$GITHUB_ENV"
+          echo "TAPIS_PASSWORD ${{ secrets.TAPIS_PASSWORD }}" >> "$GITHUB_ENV"
+      - name: Run tests
+        run: pytest --html=results.html .
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest_results.html
+          path: results.html

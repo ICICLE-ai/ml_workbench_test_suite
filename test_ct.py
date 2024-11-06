@@ -22,10 +22,16 @@ def experiment_logs(tmp_path_factory):
 
 @pytest.fixture(scope="session", autouse=True)
 def tapis_client():
-    with open('credentials.json', 'r') as f:
-        cred = json.load(f)
-        username = cred['username']
-        password = cred['password']
+    if os.path.exists('credentials.json'):
+        with open('credentials.json', 'r') as f:
+            cred = json.load(f)
+            username = cred['username']
+            password = cred['password']
+    elif 'TAPIS_USER' in os.environ and 'TAPIS_PASSWORD' in os.environ:
+        username = os.environ['TAPIS_USER']
+        password = os.environ['TAPIS_PASSWORD']
+    else:
+        raise Exception('Tapis credentials not found')
     t = Tapis(base_url=base_url, username=username, password=password)
     t.get_tokens()
     yield t
