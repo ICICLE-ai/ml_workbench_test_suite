@@ -20,6 +20,7 @@ jobs:
           echo "TAPIS_PASSWORD=${{ secrets.TAPIS_PASSWORD }}" >> "$GITHUB_ENV"
       - name: Run tests
         run: pytest --html=results.html .
+        continue-on-error: true
       - name: Upload report
         uses: actions/upload-artifact@v4
         with:

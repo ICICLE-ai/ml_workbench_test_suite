@@ -96,7 +96,7 @@ def enable_gpu(device: str) -> str:
 
 def generate_submission(model, device, site):
     d = {}
-    d['name'] = f'testsuite_{site}_{device}_{model}'
+    d['name'] = f'testsuite_{site}_{device}_{model}'[:64]
     d['appId'] = 'cameratraps-test'
     d['appVersion'] = '0.1'
     d['description'] = f'Invoke ctcontroller to run camera-traps on {site} {device}'
