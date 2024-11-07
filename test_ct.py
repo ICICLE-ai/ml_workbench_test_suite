@@ -6,10 +6,17 @@ import os
 
 base_url = 'https://icicleai.develop.tapis.io'
 models = ['41d3ed40-b836-4a62-b3fb-67cee79f33d9-model', '4108ed9d-968e-4cfe-9f18-0324e5399a97-model', '665e7c60-7244-470d-8e33-a232d5f2a390-model']
-devices = ['x86', 'Jetson', 'compute_cascadelake', 'gpu_k80', 'gpu_p100']
-sites = ['TACC', 'CHI@TACC']
+device_map = {'TACC': ['x86', 'Jetson'], 'CHI@TACC': ['compute_cascadelake', 'gpu_k80', 'gpu_p100']}
 #DEBUG = './test-job-logs'
 DEBUG = False
+
+def get_all_experiments():
+    all_experiments = []
+    for model in models:
+        for site, devices in device_map.items():
+            for device in devices:
+                all_experiments.append((model, device, site))
+    return all_experiments
 
 @pytest.fixture(scope='session', autouse=True)
 def experiment_logs(tmp_path_factory):
@@ -35,7 +42,8 @@ def tapis_client():
     t.get_tokens()
     yield t
 
-@pytest.fixture(params=[(model, device, site) for model in models for device in devices for site in sites])
+#@pytest.fixture(params=[(model, device, site) for model in models for device in devices for site in sites])
+@pytest.fixture(params=get_all_experiments())
 def job_info(request, tapis_client, experiment_logs):
     model = request.param[0]
     device = request.param[1]
@@ -62,7 +70,20 @@ def job_info(request, tapis_client, experiment_logs):
             f.write(tapisjobid)
     # poll until job has completed
     completed(tapisjobid, tapis_client)
+    if not validate_provisioning(tapisjobid, tapis_client):
+        raise pytest.skip(f'Resource {device} at {site} is not currently available')
     yield tapisjobid, model, device, site
+
+def validate_provisioning(jobid, client):
+    if client.jobs.getJob(jobUuid=jobid).get('status') == 'FAILED':
+        jobdir = client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
+        log_file = client.files.getContents(systemId='icicledev-test', path=jobdir+'/run.log').decode('utf-8')
+        if 'Not enough resources available. Try rerunning later' in log_file:
+            return False
+        else:
+            return True
+    else:
+        return True
 
 def job_running(jobid, tapis_client):
     jobinfo = tapis_client.jobs.getJob(jobUuid=jobid)
@@ -113,6 +134,11 @@ def generate_submission(model, device, site):
 class TestCameraTraps:
     def test_completes(self, tapis_client, job_info):
         jobid, model, device, site = job_info
+        # on job failure, get the tail of the job log
+        if tapis_client.jobs.getJob(jobUuid=jobid).get('status') == 'FAILED':
+            jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
+            log_file = tapis_client.files.getContents(systemId='icicledev-test', path=jobdir+'/run.log')
+            print('\n'.join(log_file.decode('utf-8').split('\n')[-20:]))
         assert tapis_client.jobs.getJob(jobUuid=jobid).get('status') == 'FINISHED'
 
     def test_image_files_exist(self, tapis_client, job_info):
