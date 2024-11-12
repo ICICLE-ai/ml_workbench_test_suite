@@ -10,6 +10,14 @@ device_map = {'TACC': ['x86', 'Jetson'], 'CHI@TACC': ['compute_cascadelake', 'gp
 #DEBUG = './test-job-logs'
 DEBUG = False
 
+def get_all_experiment_ids():
+    all_experiment_ids = []
+    for model in models:
+        for site, devices in device_map.items():
+            for device in devices:
+                all_experiment_ids.append(f'{site}_{device}_{model}')
+    return all_experiment_ids
+
 def get_all_experiments():
     all_experiments = []
     for model in models:
@@ -42,8 +50,7 @@ def tapis_client():
     t.get_tokens()
     yield t
 
-#@pytest.fixture(params=[(model, device, site) for model in models for device in devices for site in sites])
-@pytest.fixture(params=get_all_experiments())
+@pytest.fixture(params=get_all_experiments(), ids=get_all_experiment_ids())
 def job_info(request, tapis_client, experiment_logs):
     model = request.param[0]
     device = request.param[1]
