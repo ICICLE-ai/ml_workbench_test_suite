@@ -2,7 +2,9 @@ import pytest
 import json
 from time import sleep, time
 from tapipy.tapis import Tapis
+import io
 import os
+import paramiko
 
 base_url = 'https://icicleai.develop.tapis.io'
 models = ['41d3ed40-b836-4a62-b3fb-67cee79f33d9-model', '4108ed9d-968e-4cfe-9f18-0324e5399a97-model', '665e7c60-7244-470d-8e33-a232d5f2a390-model']
@@ -50,6 +52,18 @@ def tapis_client():
     t.get_tokens()
     yield t
 
+
+def update_image():
+    username = os.environ['HOST_USER']
+    ip_address = os.environ['HOST_IP_ADDR']
+    pkey = paramiko.RSAKey.from_private_key(io.StringIO(os.environ['HOST_PKEY']))
+    client = paramiko.SSHClient()
+    policy = paramiko.AutoAddPolicy()
+    client.set_missing_host_key_policy(policy)
+    client.connect(ip_address, username=username, pkey=pkey)
+    client.exec_command('docker pull tapis/ctcontroller')
+    client.close()
+
 @pytest.fixture(params=get_all_experiments(), ids=get_all_experiment_ids())
 def job_info(request, tapis_client, experiment_logs):
     model = request.param[0]
@@ -63,6 +77,7 @@ def job_info(request, tapis_client, experiment_logs):
             tapisjobid = f.readline()
     else:
         # submit job
+        update_image()
         jobinfo = tapis_client.jobs.submitJob(name=submission['name'],
                                               description=submission['description'],
                                               appId=submission['appId'],
@@ -85,7 +100,7 @@ def validate_provisioning(jobid, client):
     if client.jobs.getJob(jobUuid=jobid).get('status') == 'FAILED':
         jobdir = client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
         log_file = client.files.getContents(systemId='icicledev-test', path=jobdir+'/run.log').decode('utf-8')
-        if 'Not enough resources available. Try rerunning later' in log_file:
+        if 'Try rerunning later' in log_file:
             return False
         else:
             return True
