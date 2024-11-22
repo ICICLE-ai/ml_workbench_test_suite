@@ -19,8 +19,12 @@ jobs:
           echo "TAPIS_USER=${{ secrets.TAPIS_ACCOUNT }}" >> "$GITHUB_ENV"
           echo "TAPIS_PASSWORD=${{ secrets.TAPIS_PASSWORD }}" >> "$GITHUB_ENV"
           echo "HOST_USER=${{ secrets.HOST_USER }}" >> "$GITHUB_ENV"
-          echo "HOST_PKEY=${{ secrets.HOST_PKEY }}" >> "$GITHUB_ENV"
           echo "HOST_IP_ADDR=${{ secrets.HOST_IP_ADDR }}" >> "$GITHUB_ENV"
+          {
+            echo "HOST_PKEY<<EOF"
+            echo ${{ secrets.HOST_PKEY}}
+            echo EOF
+          } >> "$GITHUB_ENV"
       - name: Run tests
         run: pytest --junit-xml=report.xml .
         continue-on-error: true
