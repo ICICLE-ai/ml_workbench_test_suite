@@ -22,8 +22,8 @@ jobs:
           echo "HOST_IP_ADDR=${{ secrets.HOST_IP_ADDR }}" >> "$GITHUB_ENV"
           {
             echo "HOST_PKEY<<EOF"
-            echo ${{ secrets.HOST_PKEY}}
-            echo EOF
+            echo "${{ secrets.HOST_PKEY}}"
+            echo "EOF"
           } >> "$GITHUB_ENV"
       - name: Run tests
         run: pytest --junit-xml=report.xml .
