@@ -7,8 +7,9 @@ import os
 import paramiko
 
 base_url = 'https://icicleai.tapis.io'
-models = ['41d3ed40-b836-4a62-b3fb-67cee79f33d9-model', '4108ed9d-968e-4cfe-9f18-0324e5399a97-model', '665e7c60-7244-470d-8e33-a232d5f2a390-model']
-device_map = {'TACC': ['x86', 'Jetson'], 'CHI@TACC': ['compute_cascadelake', 'gpu_k80', 'gpu_p100']}
+models = ['41d3ed40-b836-4a62-b3fb-67cee79f33d9-model']#, '4108ed9d-968e-4cfe-9f18-0324e5399a97-model', '665e7c60-7244-470d-8e33-a232d5f2a390-model']
+#device_map = {'TACC': ['x86', 'Jetson'], 'CHI@TACC': ['compute_cascadelake', 'gpu_k80', 'gpu_p100']}
+device_map = {'CHI@TACC': ['gpu_k80']}
 #DEBUG = './test-job-logs'
 DEBUG = False
 
