@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Print debug statement
         run: |
-          echo "Repository dispatch triggered"
+          echo "Repository dispatch triggered for version: ${{ github.event.client_payload.ct_version }}"
   testsuite:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'worflow_dispatch' }}
