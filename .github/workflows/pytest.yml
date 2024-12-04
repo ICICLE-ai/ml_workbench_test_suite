@@ -6,8 +6,17 @@ on:
     types: [dispatch-event]
 
 jobs:
+  testtrigger:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'repository_dispatch' }}
+    environment: main
+    steps:
+      - name: Print debug statement
+        run: |
+          echo "Repository dispatch triggered"
   testsuite:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'worflow_dispatch' }}
     environment: main
     steps:
       - name: Checkout
