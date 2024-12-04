@@ -153,6 +153,7 @@ def generate_submission(model, device, site):
     envVariables.append({'key': 'CT_CONTROLLER_GPU', 'value': enable_gpu(device)})
     envVariables.append({'key': 'CT_CONTROLLER_CONFIG_PATH', 'value': '/config.yml'})
     envVariables.append({'key': 'CT_CONTROLLER_MODEL', 'value': model})
+    envVariables.append({'key': 'CT_CONTROLLER_CT_VERSION', 'value': 'latest'})
     d['parameterSet'] = {'envVariables': envVariables}
     d['archiveFilter'] = {'includeLaunchFiles': False}
     return d
