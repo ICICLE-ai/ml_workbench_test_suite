@@ -2,21 +2,17 @@ name: PyTest
 
 on:
   workflow_dispatch: 
+    inputs:
+      ct_version:
+        description: 'Camera Traps release'
+        required: true
+        type: string
   repository_dispatch:
     types: [dispatch-event]
 
 jobs:
-  testtrigger:
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'repository_dispatch' }}
-    environment: main
-    steps:
-      - name: Print debug statement
-        run: |
-          echo "Repository dispatch triggered for version: ${{ github.event.client_payload.ct_version }}"
   testsuite:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'worflow_dispatch' }}
     environment: main
     steps:
       - name: Checkout
@@ -29,6 +25,11 @@ jobs:
         uses: actions/setup-node@v4
       - name: Get credentials
         run: |
+          if  [[ ${{ github.event_name == 'workflow_dispatch' }} == true ]]; then
+            echo "CT_VERSION=${{ inputs.ct_version }}" >> "$GITHUB_ENV"
+          elif [[ ${{ github.event_name == 'repository_dispatch' }} == true ]]; then
+            echo "CT_VERSION=${{ github.event.client_payload.ct_version }}" >> "$GITHUB_ENV"
+          fi
           echo "TAPIS_USER=${{ secrets.TAPIS_ACCOUNT }}" >> "$GITHUB_ENV"
           echo "TAPIS_PASSWORD=${{ secrets.TAPIS_PASSWORD }}" >> "$GITHUB_ENV"
           echo "HOST_USER=${{ secrets.HOST_USER }}" >> "$GITHUB_ENV"
