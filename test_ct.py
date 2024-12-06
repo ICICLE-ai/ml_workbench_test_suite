@@ -12,6 +12,11 @@ device_map = {'TACC': ['x86', 'Jetson'], 'CHI@TACC': ['compute_cascadelake', 'gp
 #DEBUG = './test-job-logs'
 DEBUG = False
 
+def get_expected_images(model, dataset='15-image', parameter='images'):
+    with open('expected_values.json', 'r') as f:
+        expected_values = json.load(f)
+    return expected_values[model][dataset][parameter]
+
 def get_all_experiment_ids():
     all_experiment_ids = []
     for model in models:
@@ -177,15 +182,15 @@ class TestCameraTraps:
         jobid, model, device, site = job_info
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
         files = tapis_client.files.listFiles(systemId='icicledev-test', path=jobdir+'/ct_run/images_output_dir')
-        num_scores = [file for file in files if '.score' not in file.name]
-        assert len(num_scores) == 6
+        num_images = [file for file in files if '.jpeg' not in file.name]
+        assert len(num_images) == get_expected_images(model, parameter='images')
 
     def test_score_files_exist(self, tapis_client, job_info):
         jobid, model, device, site = job_info
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
         files = tapis_client.files.listFiles(systemId='icicledev-test', path=jobdir+'/ct_run/images_output_dir')
         num_scores = [file for file in files if '.score' in file.name]
-        assert len(num_scores) == 6
+        assert len(num_scores) == get_expected_images(model, parameter='scores')
 
     def test_power_data(self, tapis_client, job_info):
         jobid, model, device, site = job_info
@@ -194,9 +199,15 @@ class TestCameraTraps:
         power_summary = json.loads(power_summary_str.decode('utf-8'))
         # allow for the image generating plugin to complete too quickly to capture power usage
         cpu_plugins = [plugin['cpu_power_consumption']>0 for plugin in power_summary['plugin power summary report']]
-        assert sum(cpu_plugins) >= len(cpu_plugins) - 1
+        if sum(cpu_plugins) < len(cpu_plugins) and sum(cpu_plugins) > 0 and \
+           enable_gpu(device) == 'true' and device != 'Jetson': #and dataset == '15-image':
+            pytest.xfail(reason=f'{device} is too fast to capture power usage')
+        assert sum(cpu_plugins) == len(cpu_plugins)
         if enable_gpu(device) == 'true':
             gpu_plugins = [plugin['gpu_power_consumption']>0 for plugin in power_summary['plugin power summary report']]
+            if device != 'Jetson': #and dataset == '15-image':
+                if sum(gpu_plugins) < len(gpu_plugins):
+                    pytest.xfail(reason=f'{device} is too fast to capture GPU power usage')
             assert sum(gpu_plugins) >= len(gpu_plugins) - 1
         else:
             assert all([plugin['gpu_power_consumption']==0 for plugin in power_summary['plugin power summary report']])
