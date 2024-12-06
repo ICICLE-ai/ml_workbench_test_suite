@@ -98,6 +98,7 @@ def job_info(request, tapis_client, experiment_logs):
     completed(tapisjobid, tapis_client)
     if not validate_provisioning(tapisjobid, tapis_client):
         raise pytest.skip(f'Resource {device} at {site} is not currently available')
+    tapis_client.get_tokens()
     yield tapisjobid, model, device, site
 
 def validate_provisioning(jobid, client):
