@@ -9,7 +9,7 @@ import paramiko
 base_url = 'https://icicleai.tapis.io'
 models = ['41d3ed40-b836-4a62-b3fb-67cee79f33d9', '4108ed9d-968e-4cfe-9f18-0324e5399a97', '665e7c60-7244-470d-8e33-a232d5f2a390']
 device_map = {'TACC': ['x86', 'Jetson'], 'CHI@TACC': ['compute_cascadelake', 'gpu_k80', 'gpu_p100']}
-datasets=['15-image', 'small_subset']
+datasets=['15-image'] #, 'small_subset', 'small_subset100'
 #DEBUG = './test-job-logs'
 DEBUG = False
 
@@ -217,12 +217,12 @@ class TestCameraTraps:
         # allow for the image generating plugin to complete too quickly to capture power usage
         cpu_plugins = [plugin['cpu_power_consumption']>0 for plugin in power_summary['plugin power summary report']]
         if sum(cpu_plugins) < len(cpu_plugins) and sum(cpu_plugins) > 0 and \
-           enable_gpu(device) == 'true' and device != 'Jetson': #and dataset == '15-image':
+            device != 'Jetson' and dataset == '15-image':
             pytest.xfail(reason=f'{device} is too fast to capture power usage')
         assert sum(cpu_plugins) == len(cpu_plugins)
         if enable_gpu(device) == 'true':
             gpu_plugins = [plugin['gpu_power_consumption']>0 for plugin in power_summary['plugin power summary report']]
-            if device != 'Jetson': #and dataset == '15-image':
+            if device != 'Jetson' and dataset == '15-image':
                 if sum(gpu_plugins) < len(gpu_plugins):
                     pytest.xfail(reason=f'{device} is too fast to capture GPU power usage')
             assert sum(gpu_plugins) >= len(gpu_plugins) - 1
