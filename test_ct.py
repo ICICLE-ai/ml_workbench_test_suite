@@ -174,7 +174,8 @@ def generate_submission(model, device, site, dataset):
         ground_truth_url = expected_values['datasets'][dataset]['ground_truth']
         advanced_app_vars['use_custom_ground_truth_file_url'] = 'true'
         advanced_app_vars['custom_ground_truth_file_url'] = expected_values['datasets'][dataset]['ground_truth']
-    advanced_app_vars.update(custom_app_vars)
+    if custom_app_vars:
+        advanced_app_vars.update(custom_app_vars)
     envVariables.append({'key': 'CT_CONTROLLER_TARGET_SITE', 'value': site})
     envVariables.append({'key': 'CT_CONTROLLER_NODE_TYPE', 'value': device})
     envVariables.append({'key': 'CT_CONTROLLER_GPU', 'value': enable_gpu(device)})
