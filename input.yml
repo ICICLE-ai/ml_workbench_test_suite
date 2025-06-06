@@ -17,3 +17,6 @@ datasets:
   - 15-image
 #  - small_subset
 #  - small_subset100
+
+custom_app_vars:
+  #inference_server: true

@@ -14,9 +14,9 @@ DEBUG = False
 def read_inputs(input_yml):
     with open(input_yml, 'r') as f:
         cfg = yaml.safe_load(f)
-    return cfg['models'], cfg['device_map'], cfg['datasets']
+    return cfg['models'], cfg['device_map'], cfg['datasets'], cfg['custom_app_vars']
 
-models, device_map, datasets = read_inputs('input.yml')
+models, device_map, datasets, custom_app_vars = read_inputs('input.yml')
 
 def get_expected_images(model, dataset='15-image', parameter='images'):
     with open('expected_values.json', 'r') as f:
@@ -174,6 +174,7 @@ def generate_submission(model, device, site, dataset):
         ground_truth_url = expected_values['datasets'][dataset]['ground_truth']
         advanced_app_vars['use_custom_ground_truth_file_url'] = 'true'
         advanced_app_vars['custom_ground_truth_file_url'] = expected_values['datasets'][dataset]['ground_truth']
+    advanced_app_vars.update(custom_app_vars)
     envVariables.append({'key': 'CT_CONTROLLER_TARGET_SITE', 'value': site})
     envVariables.append({'key': 'CT_CONTROLLER_NODE_TYPE', 'value': device})
     envVariables.append({'key': 'CT_CONTROLLER_GPU', 'value': enable_gpu(device)})
