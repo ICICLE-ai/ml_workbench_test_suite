@@ -1,5 +1,6 @@
 import pytest
 import json
+import yaml
 from time import sleep, time
 from tapipy.tapis import Tapis
 import io
@@ -7,11 +8,15 @@ import os
 import paramiko
 
 base_url = 'https://icicleai.tapis.io'
-models = ['41d3ed40-b836-4a62-b3fb-67cee79f33d9-model', '4108ed9d-968e-4cfe-9f18-0324e5399a97-model', '665e7c60-7244-470d-8e33-a232d5f2a390-model']
-device_map = {'TACC': ['x86', 'Jetson'], 'CHI@TACC': ['compute_cascadelake', 'gpu_k80', 'gpu_p100']}
-datasets=['15-image'] #, 'small_subset', 'small_subset100'
 #DEBUG = './test-job-logs'
 DEBUG = False
+
+def read_inputs(input_yml):
+    with open(input_yml, 'r') as f:
+        cfg = yaml.safe_load(f)
+    return cfg['models'], cfg['device_map'], cfg['datasets']
+
+models, device_map, datasets = read_inputs('input.yml')
 
 def get_expected_images(model, dataset='15-image', parameter='images'):
     with open('expected_values.json', 'r') as f:

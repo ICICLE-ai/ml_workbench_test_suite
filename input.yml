@@ -1,0 +1,19 @@
+models:
+  - 9103066540bd614ee580637971ff79ef385b8a9d19c3c99160acf8cc83da0952-model # MDv6b-yolov9c
+  #- 3af93d49ba57e22ac4cb406c26c0622c759aa36b6b46d122db3c15f867a1eb68-model # MDv6b-yolov9c with OSA finetuning for 20 epochs
+  #- 41d3ed40-b836-4a62-b3fb-67cee79f33d9-model # MDv5a
+  #- 4108ed9d-968e-4cfe-9f18-0324e5399a97-model # MDv5b
+  #- 665e7c60-7244-470d-8e33-a232d5f2a390-model # MDv5-optimized
+device_map:
+  TACC:
+#    - RPi
+    - x86
+#    - Jetson
+#  CHI@TACC:
+#    - compute_cascadelake
+#    - gpu_k80
+#    - gpu_p100
+datasets:
+  - 15-image
+#  - small_subset
+#  - small_subset100
