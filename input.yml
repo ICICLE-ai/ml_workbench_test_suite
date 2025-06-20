@@ -19,4 +19,4 @@ datasets:
 #  - small_subset100
 
 custom_app_vars:
-#  inference_server: true
+  use_ultralytics: true
