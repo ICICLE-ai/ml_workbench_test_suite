@@ -9,10 +9,10 @@ device_map:
 #    - RPi
     - x86
 #    - Jetson
-#  CHI@TACC:
-#    - compute_cascadelake
-#    - gpu_k80
-#    - gpu_p100
+  CHI@TACC:
+    - compute_cascadelake
+    - gpu_k80
+    - gpu_p100
 datasets:
   - 15-image
 #  - small_subset
