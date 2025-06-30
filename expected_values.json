@@ -22,7 +22,7 @@
     "9103066540bd614ee580637971ff79ef385b8a9d19c3c99160acf8cc83da0952-model":
     {
       "15-image": {"images": 3, "scores": 3, "ckn_events": 12}, 
-      "small_subset": {"images": 13, "scores": 13, "ckn_events": 13},
+      "small_subset": {"images": 14, "scores": 14, "ckn_events": 50},
       "small_subset100": {"images": 13, "scores": 13, "ckn_events": 13}
     }
   },
