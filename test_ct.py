@@ -14,14 +14,18 @@ DEBUG = False
 def read_inputs(input_yml):
     with open(input_yml, 'r') as f:
         cfg = yaml.safe_load(f)
-    return cfg['models'], cfg['device_map'], cfg['datasets'], cfg['custom_app_vars']
+    return cfg['models'], cfg['device_map'], cfg.get('datasets', []) or [], cfg.get('video_datasets', []) or [], cfg['custom_app_vars']
 
-models, device_map, datasets, custom_app_vars = read_inputs('input.yml')
+models, device_map, datasets, video_datasets, custom_app_vars = read_inputs('input.yml')
 
-def get_expected_images(model, dataset='15-image', parameter='images'):
+def get_expected_images(model, dataset='15-image', parameter='images', mode='simulation'):
     with open('expected_values.json', 'r') as f:
         expected_values = json.load(f)
-    return expected_values['experiments'][model][dataset][parameter]
+    if mode == 'video_simulation':
+        experiments = 'video_experiments'
+    else:
+        experiments = 'experiments'
+    return expected_values[experiments][model][dataset][parameter]
 
 def get_all_experiment_ids():
     all_experiment_ids = []
@@ -29,7 +33,11 @@ def get_all_experiment_ids():
         for dataset in datasets:
             for site, devices in device_map.items():
                 for device in devices:
-                    all_experiment_ids.append(f'{site}_{device}_{model}_{dataset}')
+                    all_experiment_ids.append(f'{site}_{device}_{model}_{dataset}xsimulation')
+        for dataset in video_datasets:
+            for site, devices in device_map.items():
+                for device in devices:
+                    all_experiment_ids.append(f'{site}_{device}_{model}_{dataset}xvideo_simulation')
     return all_experiment_ids
 
 def get_all_experiments():
@@ -38,7 +46,11 @@ def get_all_experiments():
         for dataset in datasets:
             for site, devices in device_map.items():
                 for device in devices:
-                    all_experiments.append((model, device, site, dataset))
+                    all_experiments.append((model, device, site, dataset, 'simulation'))
+        for dataset in video_datasets:
+            for site, devices in device_map.items():
+                for device in devices:
+                    all_experiments.append((model, device, site, dataset, 'video_simulation'))
     return all_experiments
 
 @pytest.fixture(scope='session', autouse=True)
@@ -87,11 +99,12 @@ def job_info(request, tapis_client, experiment_logs):
     device = request.param[1]
     site = request.param[2]
     dataset=request.param[3]
+    mode = request.param[4]
     # generate job submission
-    submission = generate_submission(model, device, site, dataset)
-    if os.path.exists(f'{experiment_logs}/{model}x{device}x{site}x{dataset}.out'):
+    submission = generate_submission(model, device, site, dataset, mode)
+    if os.path.exists(f'{experiment_logs}/{model}x{device}x{site}x{dataset}x{mode}.out'):
         # if output file exists, get jobid from there and do not resubmit
-        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset}.out', 'r') as f:
+        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset}x{mode}.out', 'r') as f:
             tapisjobid = f.readline()
     else:
         # submit job
@@ -104,16 +117,16 @@ def job_info(request, tapis_client, experiment_logs):
         # get job id
         tapisjobid = jobinfo.get('uuid')
         # Write job info to log files
-        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset}.json', 'w') as f:
+        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset}x{mode}.json', 'w') as f:
             json.dump(submission, f)
-        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset}.out', 'w') as f:
+        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset}x{mode}.out', 'w') as f:
             f.write(tapisjobid)
     # poll until job has completed
     completed(tapisjobid, tapis_client)
     if not validate_provisioning(tapisjobid, tapis_client):
         raise pytest.skip(f'Resource {device} at {site} is not currently available')
     tapis_client.get_tokens()
-    yield tapisjobid, model, device, site, dataset
+    yield tapisjobid, model, device, site, dataset, mode
 
 def validate_provisioning(jobid, client):
     if client.jobs.getJob(jobUuid=jobid).get('status') == 'FAILED':
@@ -156,9 +169,9 @@ def enable_gpu(device: str) -> str:
     else:
         return 'false' 
 
-def generate_submission(model, device, site, dataset):
+def generate_submission(model, device, site, dataset, mode):
     d = {}
-    d['name'] = f'testsuite_{site}_{device}_{dataset}_{model}'[:64]
+    d['name'] = f'testsuite_{site}_{device}_{dataset}_{model}_{mode}'[:64]
     d['appId'] = 'cameratraps-test'
     d['appVersion'] = '0.1'
     d['description'] = f'Invoke ctcontroller to run camera-traps on {site} {device}'
@@ -166,15 +179,21 @@ def generate_submission(model, device, site, dataset):
     advanced_app_vars = {} 
     with open('expected_values.json', 'r') as f:
         expected_values = json.load(f)
-    if expected_values['datasets'][dataset]['images'] != '':
+    if mode == 'simulation' and expected_values['datasets'][dataset]['images'] != '':
         image_url = expected_values['datasets'][dataset]['images']
         advanced_app_vars['use_bundled_example_images'] = 'false'
         envVariables.append({'key': 'CT_CONTROLLER_INPUT', 'value': image_url})
-    if expected_values['datasets'][dataset]['ground_truth'] != '':
+    elif mode == 'video_simulation' and expected_values['video_datasets'][dataset]['video'] != '':
+        video_url = expected_values['datsets'][dataset]['video']
+        advanced_app_vars['source_video_url'] = video_url
+    if mode == 'simulation' and expected_values['datasets'][dataset]['ground_truth'] != '':
         ground_truth_url = expected_values['datasets'][dataset]['ground_truth']
         advanced_app_vars['use_custom_ground_truth_file_url'] = 'true'
         advanced_app_vars['custom_ground_truth_file_url'] = expected_values['datasets'][dataset]['ground_truth']
-    advanced_app_vars['mode'] = 'simulation'
+    elif mode == 'video_simulation' and expected_values['video_datasets'][dataset]['ground_truth'] != '':
+        ground_truth_url = expected_values['video_datasets'][dataset]['ground_truth']
+        advanced_app_vars['use_custom_ground_truth_file_url'] = 'true'
+        advanced_app_vars['custom_ground_truth_file_url'] = expected_values['video_datasets'][dataset]['ground_truth']
     if custom_app_vars:
         advanced_app_vars.update(custom_app_vars)
     envVariables.append({'key': 'CT_CONTROLLER_TARGET_SITE', 'value': site})
@@ -182,6 +201,7 @@ def generate_submission(model, device, site, dataset):
     envVariables.append({'key': 'CT_CONTROLLER_GPU', 'value': enable_gpu(device)})
     envVariables.append({'key': 'CT_CONTROLLER_CONFIG_PATH', 'value': '/config.yml'})
     envVariables.append({'key': 'CT_CONTROLLER_MODEL', 'value': model})
+    envVariables.append({'key': 'CT_CONTROLLER_MODE', 'value': mode})
     envVariables.append({'key': 'CT_CONTROLLER_ADVANCED_APP_VARS', 'value': json.dumps(advanced_app_vars)})
     if 'CT_VERSION' in os.environ:
         ct_version = os.environ['CT_VERSION']
@@ -195,7 +215,7 @@ def generate_submission(model, device, site, dataset):
 
 class TestCameraTraps:
     def test_completes(self, tapis_client, job_info):
-        jobid, model, device, site, dataset = job_info
+        jobid, model, device, site, dataset, mode = job_info
         # on job failure, get the tail of the job log
         if tapis_client.jobs.getJob(jobUuid=jobid).get('status') == 'FAILED':
             jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
@@ -204,21 +224,27 @@ class TestCameraTraps:
         assert tapis_client.jobs.getJob(jobUuid=jobid).get('status') == 'FINISHED'
 
     def test_image_files_exist(self, tapis_client, job_info):
-        jobid, model, device, site, dataset = job_info
+        jobid, model, device, site, dataset, mode = job_info
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
         files = tapis_client.files.listFiles(systemId='icicledev-test', path=jobdir+'/ct_run/images_output_dir')
         num_images = [file for file in files if '.jpeg' not in file.name]
-        assert len(num_images) == get_expected_images(model, dataset=dataset, parameter='images')
+        if mode == 'video_simulation':
+            assert len(num_images) >= get_expected_images(model, dataset=dataset, parameter='images', mode=mode)
+        else:
+            assert len(num_images) == get_expected_images(model, dataset=dataset, parameter='images', mode=mode)
 
     def test_score_files_exist(self, tapis_client, job_info):
-        jobid, model, device, site, dataset = job_info
+        jobid, model, device, site, dataset, mode = job_info
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
         files = tapis_client.files.listFiles(systemId='icicledev-test', path=jobdir+'/ct_run/images_output_dir')
         num_scores = [file for file in files if '.score' in file.name]
-        assert len(num_scores) == get_expected_images(model, dataset=dataset, parameter='scores')
+        if mode == 'video_simulation':
+            assert len(num_scores) >= get_expected_images(model, dataset=dataset, parameter='scores', mode=mode)
+        else:
+            assert len(num_scores) == get_expected_images(model, dataset=dataset, parameter='scores', mode=mode)
 
     def test_power_data(self, tapis_client, job_info):
-        jobid, model, device, site, dataset = job_info
+        jobid, model, device, site, dataset, mode = job_info
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
         power_summary_str = tapis_client.files.getContents(systemId='icicledev-test', path=jobdir+'/ct_run/power_output_dir/power_summary_report.json')
         power_summary = json.loads(power_summary_str.decode('utf-8'))
@@ -238,8 +264,10 @@ class TestCameraTraps:
             assert all([plugin['gpu_power_consumption']==0 for plugin in power_summary['plugin power summary report']])
 
     def test_ckn_events(self, tapis_client, job_info):
-        jobid, model, device, site, dataset = job_info
+        jobid, model, device, site, dataset, mode = job_info
+        if mode == 'video_simulation':
+            raise pytest.skip(f'CKN not integrated with video simulation mode')
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
         ckn_events = tapis_client.files.getContents(systemId='icicledev-test', path=jobdir+'/ct_run/oracle_output_dir/ckn.log')
         events = [line for line in ckn_events.decode('utf-8').split('\n') if 'New oracle event' in line]
-        assert len(events) == get_expected_images(model, dataset=dataset, parameter='ckn_events')
+        assert len(events) == get_expected_images(model, dataset=dataset, parameter='ckn_events', mode=mode)

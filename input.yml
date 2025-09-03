@@ -18,5 +18,8 @@ datasets:
   - small_subset
 #  - small_subset100
 
+video_datasets:
+  - example_video
+
 custom_app_vars:
   use_ultralytics: true
