@@ -23,7 +23,7 @@
     {
       "15-image": {"images": 3, "scores": 3, "ckn_events": 12}, 
       "small_subset": {"images": 14, "scores": 14, "ckn_events": 50},
-      "small_subset100": {"images": 13, "scores": 13, "ckn_events": 13}
+      "small_subset100": {"images": 34, "scores": 34, "ckn_events": 100}
     }
   },
   "video_experiments":

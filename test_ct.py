@@ -32,12 +32,16 @@ def get_all_experiment_ids():
     for model in models:
         for dataset in datasets:
             for site, devices in device_map.items():
-                for device in devices:
-                    all_experiment_ids.append(f'{site}_{device}_{model}_{dataset}xsimulation')
+                for deviced in devices:
+                    if 'simulation' in deviced.get('supported_modes', ['simulation', 'video_simulation']):
+                        device = deviced['arch']
+                        all_experiment_ids.append(f'{site}_{device}_{model}_{dataset}xsimulation')
         for dataset in video_datasets:
             for site, devices in device_map.items():
-                for device in devices:
-                    all_experiment_ids.append(f'{site}_{device}_{model}_{dataset}xvideo_simulation')
+                for deviced in devices:
+                    if 'video_simulation' in deviced.get('supported_modes', ['simulation', 'video_simulation']):
+                        device = deviced['arch']
+                        all_experiment_ids.append(f'{site}_{device}_{model}_{dataset}xvideo_simulation')
     return all_experiment_ids
 
 def get_all_experiments():
@@ -45,12 +49,16 @@ def get_all_experiments():
     for model in models:
         for dataset in datasets:
             for site, devices in device_map.items():
-                for device in devices:
-                    all_experiments.append((model, device, site, dataset, 'simulation'))
+                for deviced in devices:
+                    if 'simulation' in deviced.get('supported_modes', ['simulation', 'video_simulation']):
+                        device = deviced['arch']
+                        all_experiments.append((model, device, site, dataset, 'simulation'))
         for dataset in video_datasets:
             for site, devices in device_map.items():
-                for device in devices:
-                    all_experiments.append((model, device, site, dataset, 'video_simulation'))
+                for deviced in devices:
+                    if 'video_simulation' in deviced.get('supported_modes', ['simulation', 'video_simulation']):
+                        device = deviced['arch']
+                        all_experiments.append((model, device, site, dataset, 'video_simulation'))
     return all_experiments
 
 @pytest.fixture(scope='session', autouse=True)

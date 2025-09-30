@@ -6,13 +6,17 @@ models:
   #- 665e7c60-7244-470d-8e33-a232d5f2a390-model # MDv5-optimized
 device_map:
   TACC:
-#    - RPi
-    - x86
-#    - Jetson
+#    - arch: RPi
+    - arch: x86
+      supported_modes: [simulation]
+#    - arch: Jetson
   CHI@TACC:
     - compute_cascadelake
 #    - gpu_k80 # deprecated
     - gpu_p100
+  CHI@UC:
+    - arch: compute_cascadelake_r
+    - arch: gpu_rtx_6000
 datasets:
 #  - 15-image
   - small_subset
