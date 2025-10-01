@@ -11,9 +11,9 @@ device_map:
       supported_modes: [simulation]
 #    - arch: Jetson
   CHI@TACC:
-    - compute_cascadelake
+    - arch: compute_cascadelake
 #    - gpu_k80 # deprecated
-    - gpu_p100
+    - arch: gpu_p100
   CHI@UC:
     - arch: compute_cascadelake_r
     - arch: gpu_rtx_6000
