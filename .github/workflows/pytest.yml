@@ -47,6 +47,10 @@ jobs:
       - name: Run CTRF annotations
         run: npx github-actions-ctrf ./report.json
         if: always()
+      - name: Get test result
+        if: always()
+        run: python3 .github/scripts/get_test_result.py
+        continue-on-error: false
       #- name: Upload report
       #  uses: actions/upload-artifact@v4
       #  with:
