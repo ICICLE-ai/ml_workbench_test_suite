@@ -12,18 +12,27 @@ device_map:
 #    - arch: Jetson
   CHI@TACC:
     - arch: compute_cascadelake
-#    - gpu_k80 # deprecated
+#    - arch: gpu_k80 # deprecated
     - arch: gpu_p100
+#    - arch: compute_arm64
   CHI@UC:
     - arch: compute_cascadelake_r
     - arch: gpu_rtx_6000
 datasets:
-#  - 15-image
-  - small_subset
-#  - small_subset100
+#  - name: 15-image
+#    images:
+#    ground_truth:
+  - name: small_subset
+    images: https://code.osu.edu/khuvis.1/ohio_small_animals_subset/-/raw/02269f46fa100fa186085e2980dd705375b9a541/ohio_small_animals_subset.zip
+    ground_truth: https://code.osu.edu/khuvis.1/ohio_small_animals_subset/-/raw/main/ground_truth.csv
+#  - name: small_subset100
+#    images: https://code.osu.edu/khuvis.1/ohio_small_animals_subset/-/raw/422721e07757223cfa4dc40f57fd1bbec16a11cd/ohio_small_animals_subset100.zip
+#    ground_truth: https://code.osu.edu/khuvis.1/ohio_small_animals_subset/-/raw/422721e07757223cfa4dc40f57fd1bbec16a11cd/ground_truth100.csv
 
 video_datasets:
-  - example_video
+  - name: example_video
+    video:
+    ground_truth:
 
 custom_app_vars:
   use_ultralytics: true

@@ -32,13 +32,5 @@
     {
       "example_video": {"scores": 1, "images": 1}
     }
-  },
-  "datasets": {
-    "15-image": {"images": "", "ground_truth": ""},
-    "small_subset": {"images": "https://code.osu.edu/khuvis.1/ohio_small_animals_subset/-/raw/02269f46fa100fa186085e2980dd705375b9a541/ohio_small_animals_subset.zip", "ground_truth": "https://code.osu.edu/khuvis.1/ohio_small_animals_subset/-/raw/main/ground_truth.csv"},
-    "small_subset100": {"images": "https://code.osu.edu/khuvis.1/ohio_small_animals_subset/-/raw/422721e07757223cfa4dc40f57fd1bbec16a11cd/ohio_small_animals_subset100.zip", "ground_truth": "https://code.osu.edu/khuvis.1/ohio_small_animals_subset/-/raw/422721e07757223cfa4dc40f57fd1bbec16a11cd/ground_truth100.csv"}
-  },
-  "video_datasets": {
-    "example_video": {"video": "", "ground_truth": ""}
   }
 }

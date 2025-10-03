@@ -30,13 +30,15 @@ def get_expected_images(model, dataset='15-image', parameter='images', mode='sim
 def get_all_experiment_ids():
     all_experiment_ids = []
     for model in models:
-        for dataset in datasets:
+        for datasetd in datasets:
+            dataset = datasetd['name']
             for site, devices in device_map.items():
                 for deviced in devices:
                     if 'simulation' in deviced.get('supported_modes', ['simulation', 'video_simulation']):
                         device = deviced['arch']
                         all_experiment_ids.append(f'{site}_{device}_{model}_{dataset}xsimulation')
-        for dataset in video_datasets:
+        for datasetd in video_datasets:
+            dataset = datasetd['name']
             for site, devices in device_map.items():
                 for deviced in devices:
                     if 'video_simulation' in deviced.get('supported_modes', ['simulation', 'video_simulation']):
@@ -110,9 +112,9 @@ def job_info(request, tapis_client, experiment_logs):
     mode = request.param[4]
     # generate job submission
     submission = generate_submission(model, device, site, dataset, mode)
-    if os.path.exists(f'{experiment_logs}/{model}x{device}x{site}x{dataset}x{mode}.out'):
+    if os.path.exists(f'{experiment_logs}/{model}x{device}x{site}x{dataset["name"]}x{mode}.out'):
         # if output file exists, get jobid from there and do not resubmit
-        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset}x{mode}.out', 'r') as f:
+        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset["name"]}x{mode}.out', 'r') as f:
             tapisjobid = f.readline()
     else:
         # submit job
@@ -125,16 +127,16 @@ def job_info(request, tapis_client, experiment_logs):
         # get job id
         tapisjobid = jobinfo.get('uuid')
         # Write job info to log files
-        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset}x{mode}.json', 'w') as f:
+        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset["name"]}x{mode}.json', 'w') as f:
             json.dump(submission, f)
-        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset}x{mode}.out', 'w') as f:
+        with open(f'{experiment_logs}/{model}x{device}x{site}x{dataset["name"]}x{mode}.out', 'w') as f:
             f.write(tapisjobid)
     # poll until job has completed
     completed(tapisjobid, tapis_client)
     if not validate_provisioning(tapisjobid, tapis_client):
         raise pytest.skip(f'Resource {device} at {site} is not currently available')
     tapis_client.get_tokens()
-    yield tapisjobid, model, device, site, dataset, mode
+    yield tapisjobid, model, device, site, dataset['name'], mode
 
 def validate_provisioning(jobid, client):
     if client.jobs.getJob(jobUuid=jobid).get('status') == 'FAILED':
@@ -175,33 +177,31 @@ def enable_gpu(device: str) -> str:
     if 'gpu' in device or device == 'Jetson':
         return 'true'
     else:
-        return 'false' 
+        return 'false'
 
 def generate_submission(model, device, site, dataset, mode):
     d = {}
-    d['name'] = f'testsuite_{site}_{device}_{dataset}_{model}_{mode}'[:64]
+    d['name'] = f'testsuite_{site}_{device}_{dataset["name"]}_{model}_{mode}'[:64]
     d['appId'] = 'cameratraps-test'
     d['appVersion'] = '0.1'
     d['description'] = f'Invoke ctcontroller to run camera-traps on {site} {device}'
     envVariables = []
     advanced_app_vars = {} 
-    with open('expected_values.json', 'r') as f:
-        expected_values = json.load(f)
-    if mode == 'simulation' and expected_values['datasets'][dataset]['images'] != '':
-        image_url = expected_values['datasets'][dataset]['images']
+    if mode == 'simulation' and dataset['images']:
+        image_url = dataset['images']
         advanced_app_vars['use_bundled_example_images'] = 'false'
         envVariables.append({'key': 'CT_CONTROLLER_INPUT', 'value': image_url})
-    elif mode == 'video_simulation' and expected_values['video_datasets'][dataset]['video'] != '':
-        video_url = expected_values['datsets'][dataset]['video']
+    elif mode == 'video_simulation' and dataset['video']:
+        video_url = dataset['video']
         advanced_app_vars['source_video_url'] = video_url
-    if mode == 'simulation' and expected_values['datasets'][dataset]['ground_truth'] != '':
-        ground_truth_url = expected_values['datasets'][dataset]['ground_truth']
+    if mode == 'simulation' and dataset['ground_truth']:
+        ground_truth_url = dataset['ground_truth']
         advanced_app_vars['use_custom_ground_truth_file_url'] = 'true'
-        advanced_app_vars['custom_ground_truth_file_url'] = expected_values['datasets'][dataset]['ground_truth']
-    elif mode == 'video_simulation' and expected_values['video_datasets'][dataset]['ground_truth'] != '':
-        ground_truth_url = expected_values['video_datasets'][dataset]['ground_truth']
+        advanced_app_vars['custom_ground_truth_file_url'] = dataset['ground_truth']
+    elif mode == 'video_simulation' and dataset['ground_truth']:
+        ground_truth_url = dataset['ground_truth']
         advanced_app_vars['use_custom_ground_truth_file_url'] = 'true'
-        advanced_app_vars['custom_ground_truth_file_url'] = expected_values['video_datasets'][dataset]['ground_truth']
+        advanced_app_vars['custom_ground_truth_file_url'] = dataset['ground_truth']
     if custom_app_vars:
         advanced_app_vars.update(custom_app_vars)
     envVariables.append({'key': 'CT_CONTROLLER_TARGET_SITE', 'value': site})
