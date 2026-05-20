@@ -39,19 +39,8 @@ jobs:
             echo "${{ secrets.HOST_PKEY}}"
             echo "EOF"
           } >> "$GITHUB_ENV"
-      - name: Debug environment
-        run: |
-          whoami
-          pwd
-          echo "PATH=$PATH"
-          which python || true
-          which pip || true
-          which pytest || true
-          python --version || true
-          pip --version || true
-          env | sort
       - name: Run tests
-        run: pytest --junit-xml=report.xml .
+        run: python3 -m pytest --junit-xml=report.xml .
         continue-on-error: true
       - name: Convert to ctrf
         run: npx junit-to-ctrf ./report.xml -o ./report.json
