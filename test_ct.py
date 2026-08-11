@@ -276,6 +276,6 @@ class TestCameraTraps:
         if mode == 'video_simulation':
             raise pytest.skip(f'CKN not integrated with video simulation mode')
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
-        ckn_events = tapis_client.files.getContents(systemId='icicledev-test', path=jobdir+'/ct_run/oracle_output_dir/ckn.log')
-        events = [line for line in ckn_events.decode('utf-8').split('\n') if 'New oracle event' in line]
+        ckn_events = tapis_client.files.getContents(systemId='icicledev-test', path=jobdir+'/ct_run/ckn_output_dir/ckn_plugin.log')
+        events = [line for line in ckn_events.decode('utf-8').split('\n') if 'KAFKA EVENT' in line]
         assert len(events) == get_expected_images(model, dataset=dataset, parameter='ckn_events', mode=mode)
