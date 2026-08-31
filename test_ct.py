@@ -10,6 +10,7 @@ import paramiko
 base_url = 'https://icicleai.tapis.io'
 #DEBUG = './test-job-logs'
 DEBUG = False
+systemId = 'controller-test'
 
 def read_inputs(input_yml):
     with open(input_yml, 'r') as f:
@@ -141,7 +142,7 @@ def job_info(request, tapis_client, experiment_logs):
 def validate_provisioning(jobid, client):
     if client.jobs.getJob(jobUuid=jobid).get('status') == 'FAILED':
         jobdir = client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
-        log_file = client.files.getContents(systemId='icicledev-test', path=jobdir+'/run.log').decode('utf-8')
+        log_file = client.files.getContents(systemId=systemId, path=jobdir+'/run.log').decode('utf-8')
         if 'Try rerunning later' in log_file:
             return False
         else:
@@ -227,14 +228,14 @@ class TestCameraTraps:
         # on job failure, get the tail of the job log
         if tapis_client.jobs.getJob(jobUuid=jobid).get('status') == 'FAILED':
             jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
-            log_file = tapis_client.files.getContents(systemId='icicledev-test', path=jobdir+'/run.log')
+            log_file = tapis_client.files.getContents(systemId=systemId, path=jobdir+'/run.log')
             print('\n'.join(log_file.decode('utf-8').split('\n')[-20:]))
         assert tapis_client.jobs.getJob(jobUuid=jobid).get('status') == 'FINISHED'
 
     def test_image_files_exist(self, tapis_client, job_info):
         jobid, model, device, site, dataset, mode = job_info
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
-        files = tapis_client.files.listFiles(systemId='icicledev-test', path=jobdir+'/ct_run/images_output_dir')
+        files = tapis_client.files.listFiles(systemId=systemId, path=jobdir+'/ct_run/images_output_dir')
         num_images = [file for file in files if '.jpeg' not in file.name]
         if mode == 'video_simulation':
             assert len(num_images) >= get_expected_images(model, dataset=dataset, parameter='images', mode=mode)
@@ -244,7 +245,7 @@ class TestCameraTraps:
     def test_score_files_exist(self, tapis_client, job_info):
         jobid, model, device, site, dataset, mode = job_info
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
-        files = tapis_client.files.listFiles(systemId='icicledev-test', path=jobdir+'/ct_run/images_output_dir')
+        files = tapis_client.files.listFiles(systemId=systemId, path=jobdir+'/ct_run/images_output_dir')
         num_scores = [file for file in files if '.score' in file.name]
         if mode == 'video_simulation':
             assert len(num_scores) >= get_expected_images(model, dataset=dataset, parameter='scores', mode=mode)
@@ -254,7 +255,7 @@ class TestCameraTraps:
     def test_power_data(self, tapis_client, job_info):
         jobid, model, device, site, dataset, mode = job_info
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
-        power_summary_str = tapis_client.files.getContents(systemId='icicledev-test', path=jobdir+'/ct_run/power_output_dir/power_summary_report.json')
+        power_summary_str = tapis_client.files.getContents(systemId=systemId, path=jobdir+'/ct_run/power_output_dir/power_summary_report.json')
         power_summary = json.loads(power_summary_str.decode('utf-8'))
         # allow for the image generating plugin to complete too quickly to capture power usage
         cpu_plugins = [plugin['cpu_power_consumption']>0 for plugin in power_summary['plugin power summary report']]
@@ -276,6 +277,6 @@ class TestCameraTraps:
         if mode == 'video_simulation':
             raise pytest.skip(f'CKN not integrated with video simulation mode')
         jobdir = tapis_client.jobs.getJob(jobUuid=jobid).get('archiveSystemDir')
-        ckn_events = tapis_client.files.getContents(systemId='icicledev-test', path=jobdir+'/ct_run/ckn_output_dir/ckn_plugin.log')
+        ckn_events = tapis_client.files.getContents(systemId=systemId, path=jobdir+'/ct_run/ckn_output_dir/ckn_plugin.log')
         events = [line for line in ckn_events.decode('utf-8').split('\n') if 'KAFKA EVENT' in line]
         assert len(events) == get_expected_images(model, dataset=dataset, parameter='ckn_events', mode=mode)
