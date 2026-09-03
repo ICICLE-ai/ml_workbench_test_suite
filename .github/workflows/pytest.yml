@@ -64,7 +64,7 @@ jobs:
         run: |
           mkdir -p reports
           K_ID="${{ matrix.k_id }}"
-          pytest -k "$K_ID" --junit-xml="reports/${K_ID}.xml" .
+          python3 -m pytest -k "$K_ID" --junit-xml="reports/${K_ID}.xml" .
         continue-on-error: true
       - name: Upload JUnit report for this experiment
         uses: actions/upload-artifact@v4
