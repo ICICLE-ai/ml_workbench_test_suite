@@ -33,7 +33,8 @@ jobs:
     runs-on: self-hosted
     environment: main
     strategy:
-      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+      matrix:
+        include: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
       max-parallel: 1
     steps:
       - name: Checkout
