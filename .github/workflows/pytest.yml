@@ -1,7 +1,7 @@
 name: PyTest
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
     inputs:
       ct_version:
         description: 'Camera Traps release'
@@ -14,6 +14,9 @@ jobs:
   testsuite:
     runs-on: self-hosted
     environment: main
+    strategy:
+      matrix: {}
+      max-parallel: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,7 +28,7 @@ jobs:
         uses: actions/setup-node@v7
       - name: Get credentials
         run: |
-          if  [[ ${{ github.event_name == 'workflow_dispatch' }} == true ]]; then
+          if [[ ${{ github.event_name == 'workflow_dispatch' }} == true ]]; then
             echo "CT_VERSION=${{ inputs.ct_version }}" >> "$GITHUB_ENV"
           elif [[ ${{ github.event_name == 'repository_dispatch' }} == true ]]; then
             echo "CT_VERSION=${{ github.event.client_payload.ct_version }}" >> "$GITHUB_ENV"
@@ -39,8 +42,17 @@ jobs:
             echo "${{ secrets.HOST_PKEY}}"
             echo "EOF"
           } >> "$GITHUB_ENV"
-      - name: Run tests
-        run: python3 -m pytest --junit-xml=report.xml .
+      - name: Generate experiment matrix
+        id: gen_matrix
+        run: |
+          python .github/scripts/gen_matrix.py > matrix.json
+          echo "matrix=$(cat matrix.json)" >> $GITHUB_OUTPUT
+      - name: Set matrix from generated JSON
+        if: steps.gen_matrix.outputs.matrix != ''
+        run: echo "matrix=${{ steps.gen_matrix.outputs.matrix }}" >> $GITHUB_ENV
+      - name: Run ${{ matrix.full_id }}
+        run: |
+          python -m pytest -k "${{ matrix.k_id }}" --junit-xml=report.xml .
         continue-on-error: true
       - name: Convert to ctrf
         run: npx junit-to-ctrf ./report.xml -o ./report.json
@@ -51,8 +63,3 @@ jobs:
         if: always()
         run: python3 .github/scripts/get_test_result.py
         continue-on-error: false
-      #- name: Upload report
-      #  uses: actions/upload-artifact@v4
-      #  with:
-      #    name: pytest_results
-      #    path: results.html
