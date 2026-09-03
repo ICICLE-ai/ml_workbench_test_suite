@@ -25,7 +25,7 @@ jobs:
       - name: Generate experiment matrix
         id: gen_matrix
         run: |
-          python .github/scripts/gen_matrix.py > matrix.json
+          python3 .github/scripts/gen_matrix.py > matrix.json
           echo "matrix=$(cat matrix.json)" >> $GITHUB_OUTPUT
 
   testsuite:
