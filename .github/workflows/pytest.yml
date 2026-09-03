@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install dependencies (only needed for the script)
+      - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
@@ -27,7 +27,6 @@ jobs:
         run: |
           python3 .github/scripts/gen_matrix.py > matrix.json
           echo "matrix=$(cat matrix.json)" >> $GITHUB_OUTPUT
-
   testsuite:
     needs: generate-matrix
     runs-on: self-hosted
@@ -63,12 +62,38 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Run ${{ matrix.full_id }}
         run: |
-          python3 -m pytest -k "${{ matrix.k_id }}" --junit-xml=report.xml .
+          mkdir -p reports
+          K_ID="${{ matrix.k_id }}"
+          pytest -k "$K_ID" --junit-xml="reports/${K_ID}.xml" .
         continue-on-error: true
-      - name: Convert to ctrf
-        run: npx junit-to-ctrf ./report.xml -o ./report.json
+      - name: Upload JUnit report for this experiment
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.k_id }}
+          path: reports/${{ matrix.k_id }}.xml
+          retention-days: 7
+  generate-reports:
+    needs: testsuite
+    runs-on: self-hosted
+    environment: main
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download all JUnit artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-junit
+      - name: Install junit-merge
+        run: npm install -g junit-merge
+      - name: Merge all JUnit XML files into a single report.xml
+        run: |
+          mkdir -p merged
+          junit-merge $(find all-junit -name '*.xml') > merged/report.xml
+          echo "Merged $(ls all-junit/**/*.xml | wc -l) files → merged/report.xml"
+      - name: Convert merged report to CTRF
+        run: npx junit-to-ctrf merged/report.xml -o merged/report.json
       - name: Run CTRF annotations
-        run: npx github-actions-ctrf ./report.json
+        run: npx github-actions-ctrf merged/report.json
         if: always()
       - name: Get test result
         if: always()
