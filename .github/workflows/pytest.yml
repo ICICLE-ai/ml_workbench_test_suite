@@ -63,7 +63,7 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Run ${{ matrix.full_id }}
         run: |
-          python -m pytest -k "${{ matrix.k_id }}" --junit-xml=report.xml .
+          python3 -m pytest -k "${{ matrix.k_id }}" --junit-xml=report.xml .
         continue-on-error: true
       - name: Convert to ctrf
         run: npx junit-to-ctrf ./report.xml -o ./report.json
