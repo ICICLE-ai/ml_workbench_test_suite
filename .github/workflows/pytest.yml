@@ -98,7 +98,7 @@ jobs:
       - name: Convert merged report to CTRF
         run: npx junit-to-ctrf merged/report.xml -o merged/report.json
       - name: Run CTRF annotations
-        run: npx github-actions-ctrf merged/report.json
+        run: npx github-actions-ctrf all merged/report.json
         if: always()
       - name: Get test result
         if: always()
