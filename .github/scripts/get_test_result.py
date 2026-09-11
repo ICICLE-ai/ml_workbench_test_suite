@@ -2,7 +2,7 @@
 import xml.etree.ElementTree as ET
 
 
-def main(report_path='report.xml'):
+def main(report_path='merged/report.xml'):
     try:
         tree = ET.parse(report_path)
         root = tree.getroot()
