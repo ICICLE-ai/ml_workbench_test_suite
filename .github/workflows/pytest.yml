@@ -86,7 +86,8 @@ jobs:
       - name: Merge all JUnit XML files into a single report.xml
         run: |
           mkdir -p merged
-          npx junit-merge $(find all-junit -name '*.xml') > merged/report.xml
+          echo npx path: $(which npx)
+          npx junit-merge -o merged/report.xml $(find all-junit -name '*.xml')
           echo "Merged $(ls all-junit/**/*.xml | wc -l) files → merged/report.xml"
       - name: Convert merged report to CTRF
         run: npx junit-to-ctrf merged/report.xml -o merged/report.json
