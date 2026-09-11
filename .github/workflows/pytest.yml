@@ -42,8 +42,6 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
       - name: Get credentials
         run: |
           if [[ ${{ github.event_name == 'workflow_dispatch' }} == true ]]; then
@@ -83,15 +81,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: all-junit
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
       - name: Merge all JUnit XML files into a single report.xml
         run: |
           mkdir -p merged
-          npx junit-merge $(find all-junit -name '*.xml') > merged/report.xml
+          npx junit-merge -o merged/report.xml $(find all-junit -name '*.xml')
           echo "Merged $(ls all-junit/**/*.xml | wc -l) files → merged/report.xml"
       - name: Convert merged report to CTRF
         run: npx junit-to-ctrf merged/report.xml -o merged/report.json
       - name: Run CTRF annotations
-        run: npx github-actions-ctrf merged/report.json
+        run: npx github-actions-ctrf all merged/report.json
         if: always()
       - name: Get test result
         if: always()
